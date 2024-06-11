@@ -12,6 +12,7 @@ def hello():
     """
     Hello world on root path
     """
+    conn = psycopg2.connect()
     return os.environ.get("MESSAGE", "Hello world!")
 
 
