@@ -15,7 +15,7 @@ def hello():
     with psycopg2.connect() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT 1;")
-            return cur.fetchone()
+            return str(cur.fetchone())
 
 
 if __name__ == "__main__":
