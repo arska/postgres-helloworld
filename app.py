@@ -12,10 +12,13 @@ def hello():
     """
     Hello world on root path
     """
-    with psycopg2.connect() as conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT 1;")
-            return str(cur.fetchone())
+    try:
+        with psycopg2.connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT 1;")
+                return "Success! Postgres returned: " + str(cur.fetchone())
+    except Exception as e:
+        return "Error: " + str(e)
 
 
 if __name__ == "__main__":
