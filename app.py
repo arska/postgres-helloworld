@@ -12,8 +12,10 @@ def hello():
     """
     Hello world on root path
     """
-    conn = psycopg2.connect()
-    return os.environ.get("MESSAGE", "Hello world!")
+    with psycopg2.connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1;")
+            return cur.fetchone()
 
 
 if __name__ == "__main__":
