@@ -1,0 +1,109 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: postgres-helloworld
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-helloworld
+  template:
+    metadata:
+      labels:
+        app: postgres-helloworld
+        deployment: postgres-helloworld
+    spec:
+      volumes:
+        - name: postgres-secret-volume
+          secret:
+            secretName: postgres-creds
+            defaultMode: 420
+      containers:
+        - name: postgres-helloworld
+          env:
+            - name: PGHOST
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-creds
+                  key: POSTGRESQL_HOST
+            - name: PGPORT
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-creds
+                  key: POSTGRESQL_PORT
+            - name: PGDATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-creds
+                  key: POSTGRESQL_DB
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-creds
+                  key: POSTGRESQL_USER
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-creds
+                  key: POSTGRESQL_PASSWORD
+            - name: PGSSLCERT
+              value: /mnt/tls.crt
+            - name: PGSSLKEY
+              value: /mnt/tls.key
+            - name: PGSSLROOTCERT
+              value: /mnt/ca.crt
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          volumeMounts:
+            - name: postgres-secret-volume
+              readOnly: true
+              mountPath: /mnt
+          image: "ghcr.io/arska/postgres-helloworld:main"
+      restartPolicy: Always
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: postgres-helloworld
+spec:
+  ports:
+    - name: 8080-tcp
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: postgres-helloworld
+    deployment: postgres-helloworld
+---
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: postgres-helloworld
+spec:
+  to:
+    kind: Service
+    name: postgres-helloworld
+    weight: 100
+  port:
+    targetPort: 8080-tcp
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+---
+apiVersion: vshn.appcat.vshn.io/v1
+kind: VSHNPostgreSQL
+metadata:
+  name: pgsql-app1-prod
+spec:
+  writeConnectionSecretToRef:
+    name: postgres-creds
+  parameters:
+    size:
+      plan: standard-2
