@@ -20,5 +20,5 @@ markupsafe==2.1.5
     #   werkzeug
 psycopg2-binary==2.9.9
     # via -r requirements.in
-werkzeug==3.0.3
+werkzeug==3.0.4
     # via flask
